@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 # API configuration
 SCALE_AI_ENDPOINT = "https://api.donovan.scale.com/v1/chat"
-SCALE_AI_API_KEY = "your_api_key_here"  # Replace with your actual API key
+SCALE_AI_API_KEY = "live_a04ee4b972384b13bac7597080aface6"  # Replace with your actual API key
 
 class MakotoResponse(NamedTuple):
     response_text: str
