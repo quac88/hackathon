@@ -1,36 +1,29 @@
-import bittensor
 import torch
-from torch.nn import CrossEntropyLoss
-
-tokenizer = bittensor.tokenizer()
-
-
-def causal_lm_loss(logits: torch.tensor, inputs: torch.tensor) -> torch.tensor:
-    shift_logits = logits[..., :-1, :].contiguous()
-    shift_labels = inputs[..., 1:].contiguous()
-    # Flatten the tokens
-    loss_fct = CrossEntropyLoss()
-    loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
-    return loss
-
+from transformers import AutoTokenizer
 
 class TokenizerWrapper(object):
-    "cause its easier to do this than bother starmapping some thing to the dataloader class"
-
-    def __init__(self, seq_len: int):
+    def __init__(self, model_name: str, seq_len: int):
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.seq_len = seq_len
 
-    def _tokenize(self, example):
-        text = example["text"]
-        tokens = tokenizer(
+        # Set padding token if not already set
+        if self.tokenizer.pad_token is None:
+            if self.tokenizer.eos_token:
+                self.tokenizer.pad_token = self.tokenizer.eos_token
+            else:
+                self.tokenizer.add_special_tokens({'pad_token': '[PAD]'})
+
+    def _tokenize(self, text):
+        return self.tokenizer(
             text,
             max_length=self.seq_len,
             truncation=True,
             padding="max_length",
-            return_tensors="pt",
+            return_tensors="pt"
         )["input_ids"]
-        example["tokens"] = tokens
-        return example
 
-    def __call__(self, example):
-        return self._tokenize(example)
+    def __call__(self, text):
+        return self._tokenize(text)
+
+# Usage
+tokenizer_wrapper = TokenizerWrapper("gpt2", 512)  # Example: using GPT-2 tokenizer
